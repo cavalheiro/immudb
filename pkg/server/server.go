@@ -189,7 +189,7 @@ func (s *ImmuServer) Initialize() error {
 	s.GrpcServer = grpc.NewServer(options...)
 	schema.RegisterImmuServiceServer(s.GrpcServer, s)
 	grpc_prometheus.Register(s.GrpcServer)
-
+	
 	return err
 }
 
@@ -222,6 +222,17 @@ func (s *ImmuServer) Start() (err error) {
 		}
 	}()
 
+	if s.Options.WebServer {
+		if err := s.setUpWebServer(); err != nil {
+			return err
+		}
+		defer func() {
+			if err := s.webServer.Close(); err != nil {
+				s.Logger.Errorf("Failed to shutdown web API/console server: %s", err)
+			}
+		}()
+	}
+
 	s.mux.Unlock()
 	<-s.quit
 
@@ -253,6 +264,19 @@ func (s *ImmuServer) setUpMetricsServer() error {
 		s.metricFuncServerUptimeCounter,
 		s.metricFuncDefaultDBSize,
 	)
+	return nil
+}
+
+func (s *ImmuServer) setUpWebServer() error {
+	server, err := StartWebServer(
+	    s.Options.WebBind(),
+		s.Options.GprcConnectAddr(),
+		s.Logger,
+	)
+	if err != nil {
+		return err
+	}
+	s.webServer = server
 	return nil
 }
 
