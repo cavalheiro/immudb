@@ -17,6 +17,7 @@ limitations under the License.
 package server
 
 import (
+	pgsqlsrv "github.com/codenotary/immudb/pkg/pgsql/server"
 	"github.com/codenotary/immudb/pkg/stream"
 	"net"
 	"net/http"
@@ -69,6 +70,7 @@ type ImmuServer struct {
 	mux                  sync.Mutex
 	StateSigner          StateSigner
 	StreamServiceFactory stream.ServiceFactory
+	PgsqlSrv             pgsqlsrv.Server
 }
 
 // DefaultServer ...

@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	pgsqlsrv "github.com/codenotary/immudb/pkg/pgsql/server"
 	"io/ioutil"
 	"log"
 	"math"
@@ -190,6 +191,10 @@ func (s *ImmuServer) Initialize() error {
 	schema.RegisterImmuServiceServer(s.GrpcServer, s)
 	grpc_prometheus.Register(s.GrpcServer)
 
+	// todo inject in main server
+
+	s.PgsqlSrv = pgsqlsrv.New(pgsqlsrv.Port("5439"), pgsqlsrv.DatabaseList(s.dbList))
+
 	return err
 }
 
@@ -217,6 +222,14 @@ func (s *ImmuServer) Start() (err error) {
 
 	go func() {
 		if err := s.GrpcServer.Serve(s.listener); err != nil {
+			s.mux.Unlock()
+			log.Fatal(err)
+		}
+	}()
+
+	go func() {
+		s.Logger.Infof("pgsl server is running at port %d", nil)
+		if err := s.PgsqlSrv.Serve(); err != nil {
 			s.mux.Unlock()
 			log.Fatal(err)
 		}
