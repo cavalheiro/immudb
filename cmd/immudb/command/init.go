@@ -66,6 +66,9 @@ func parseOptions() (options *server.Options, err error) {
 	synced := viper.GetBool("synced")
 	tokenExpTime := viper.GetInt("token-expiry-time")
 
+	pgsqlServer := viper.GetBool("pgsql-server")
+	pgsqlServerPort := viper.GetInt("pgsql-server-port")
+
 	storeOpts := server.DefaultStoreOptions().WithSynced(synced)
 
 	options = server.
@@ -85,7 +88,9 @@ func parseOptions() (options *server.Options, err error) {
 		WithMaintenance(maintenance).
 		WithSigningKey(signingKey).
 		WithStoreOptions(storeOpts).
-		WithTokenExpiryTime(tokenExpTime)
+		WithTokenExpiryTime(tokenExpTime).
+		WithPgsqlServer(pgsqlServer).
+		WithPgsqlServerPort(pgsqlServerPort)
 
 	if mtls {
 		// todo https://golang.org/src/crypto/x509/root_linux.go
@@ -119,6 +124,8 @@ func (cl *Commandline) setupFlags(cmd *cobra.Command, options *server.Options, m
 	cmd.Flags().String("signingKey", options.SigningKey, "signature private key path. If a valid one is provided, it enables the cryptographic signature of the root. E.g. \"./../test/signer/ec3.key\"")
 	cmd.Flags().Bool("synced", false, "synced mode prevents data lost under unexpected crashes but affects performance")
 	cmd.Flags().Int("token-expiry-time", options.TokenExpiryTimeMin, "client authentication token expiration time. Minutes")
+	cmd.Flags().Bool("pgsql-server", options.PgsqlServer, "enable or disable pgsql server")
+	cmd.Flags().Int("pgsql-server-port", options.PgsqlServerPort, "pgsql server port")
 }
 
 func setupDefaults(options *server.Options, mtlsOptions *server.MTLsOptions) {
@@ -139,5 +146,6 @@ func setupDefaults(options *server.Options, mtlsOptions *server.MTLsOptions) {
 	viper.SetDefault("admin-password", options.AdminPassword)
 	viper.SetDefault("maintenance", options.GetMaintenance())
 	viper.SetDefault("synced", false)
-	viper.SetDefault("token-expiry-time", options.TokenExpiryTimeMin)
+	viper.SetDefault("pgsql-server", options.PgsqlServer)
+	viper.SetDefault("pgsql-server-port", options.PgsqlServerPort)
 }
